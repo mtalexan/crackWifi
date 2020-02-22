@@ -1,0 +1,3 @@
+[submodule "password_cracking_rules"]
+	path = password_cracking_rules
+	url = https://github.com/NotSoSecure/password_cracking_rules.git
